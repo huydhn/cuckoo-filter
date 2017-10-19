@@ -1,2 +1,1 @@
-# cuckoo-filter
-Experiment
+Experiment with Cuckoo filter.
