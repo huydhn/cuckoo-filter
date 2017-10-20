@@ -1,7 +1,6 @@
 '''
-Cuckoo filter bucket.
+Cuckoo filter internal bucket.
 '''
-
 import random
 
 
@@ -92,7 +91,7 @@ class Bucket(object):
 
 
     def __repr__(self):
-        return '<Bucket: ' + str(self.bucket) + '>'
+        return '<Bucket: {0}>'.format(self.bucket)
 
 
     def __sizeof__(self):
