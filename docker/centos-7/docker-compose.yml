@@ -1,0 +1,4 @@
+cuckoo-filter:
+  build: .
+  volumes:
+    - ../../:/build

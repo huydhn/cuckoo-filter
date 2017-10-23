@@ -10,6 +10,7 @@ Cuckoo filters were originally described in:
     In Proceedings of the 10th ACM International on Conference on emerging Networking
     Experiments and Technologies (pp. 75-88). ACM.
 '''
+
 import codecs
 import random
 import mmh3
@@ -49,7 +50,8 @@ class CuckooFilter(object):
         self.bucket_size = bucket_size
         self.max_kicks = max_kicks
 
-        # Initialize the list of buckets
+        # Initialize the list of bucket
+        # TODO: implement lazy initialization so that it can initialize billions of items quickly
         self.buckets = [Bucket(size=bucket_size) for _ in range(self.capacity)]
 
         # The current number of items in the filter
@@ -166,7 +168,7 @@ class CuckooFilter(object):
         '''
         Provide some useful details about the current state of the filter.
         '''
-        return self.size / (self.capacity * self.bucket_size)
+        return round(float(self.size) / (self.capacity * self.bucket_size), 4)
 
 
     def __contains__(self, item):

@@ -1,6 +1,7 @@
 '''
 Cuckoo filter internal bucket.
 '''
+
 import random
 
 
