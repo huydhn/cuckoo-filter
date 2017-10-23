@@ -8,6 +8,8 @@ try:
 except:
     import unittest
 
+import timeit
+
 from netaddr import IPAddress
 # pylint: disable=import-error
 from cuckoo.filter import CuckooFilter
@@ -99,3 +101,18 @@ class BucketTest(unittest.TestCase):
             # Make sure that all items are in the bucket
             self.assertEqual(cuckoo.contains(item), case['included'], 'Item {0} is in the filter'.format(item))
             self.assertEqual(item in cuckoo, case['included'], 'Item {0} is in the bucket'.format(item))
+
+
+    def test_load(self):
+        '''
+        Load a huge number of items and test the filter performance
+        '''
+        # Use a large capacity here for benchmarking the filter
+        # capacity = 100000000
+        # Use the fix fingerprint size of 8-bit for testing
+        # fingerprint_size = 8
+
+        allocation_time = timeit.timeit('CuckooFilter(capacity=100000000, fingerprint_size=8)',
+                                        setup='from cuckoo.filter import CuckooFilter',
+                                        number=10)
+        print allocation_time

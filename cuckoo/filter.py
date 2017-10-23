@@ -51,8 +51,7 @@ class CuckooFilter(object):
         self.max_kicks = max_kicks
 
         # Initialize the list of bucket
-        # TODO: implement lazy initialization so that it can initialize billions of items quickly
-        self.buckets = [Bucket(size=bucket_size) for _ in range(self.capacity)]
+        self.buckets = [None] * self.capacity
 
         # The current number of items in the filter
         self.size = 0
@@ -71,6 +70,10 @@ class CuckooFilter(object):
         for index in self.indices(item, fingerprint):
             indices.append(index)
 
+            if self.buckets[index] is None:
+                # Initialize the bucket if needed
+                self.buckets[index] = Bucket(size=self.bucket_size)
+
             if self.buckets[index].insert(fingerprint):
                 # Update the number of items in the filter
                 self.size = self.size + 1
@@ -85,6 +88,10 @@ class CuckooFilter(object):
 
             # Compute the potential bucket to move the swapped fingerprint to
             index = (index ^ self.index(fingerprint)) % self.capacity
+
+            if self.buckets[index] is None:
+                # Initialize the bucket if needed
+                self.buckets[index] = Bucket(size=self.bucket_size)
 
             if self.buckets[index].insert(fingerprint):
                 # Update the number of items in the filter
@@ -105,6 +112,10 @@ class CuckooFilter(object):
         # there could be more than 2 indexes as it is currently used by partial-key
         # Cuckoo hashing
         for index in self.indices(item, fingerprint):
+            if self.buckets[index] is None:
+                # Initialize the bucket if needed
+                self.buckets[index] = Bucket(size=self.bucket_size)
+
             if fingerprint in self.buckets[index]:
                 return True
 
@@ -119,6 +130,10 @@ class CuckooFilter(object):
         fingerprint = self.fingerprint(item)
 
         for index in self.indices(item, fingerprint):
+            if self.buckets[index] is None:
+                # Initialize the bucket if needed
+                self.buckets[index] = Bucket(size=self.bucket_size)
+
             if self.buckets[index].delete(fingerprint):
                 # Update the number of items in the filter
                 self.size = self.size - 1
