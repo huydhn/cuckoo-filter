@@ -20,7 +20,7 @@ class BucketTest(unittest.TestCase):
     Test classic Cuckoo filter
     '''
 
-    def test_filter(self):
+    def test_classic_filter(self):
         '''
         Adding and deleting items in a Cuckoo filter
         '''
@@ -107,12 +107,19 @@ class BucketTest(unittest.TestCase):
         '''
         Load a huge number of items and test the filter performance
         '''
-        # Use a large capacity here for benchmarking the filter
-        # capacity = 100000000
-        # Use the fix fingerprint size of 8-bit for testing
-        # fingerprint_size = 8
-
+        # Classic Cuckoo filter with 100_000_000
         allocation_time = timeit.timeit('CuckooFilter(capacity=100000000, fingerprint_size=8)',
                                         setup='from cuckoo.filter import CuckooFilter',
                                         number=10)
         print allocation_time
+
+
+    def test_dynamic_bucket_filter(self):
+        '''
+        Use a filter with dynamic bucket size
+        '''
+
+        # Use a large capacity here for benchmarking the filter
+        # capacity = 100000000
+        # Use the fix fingerprint size of 8-bit for testing
+        # fingerprint_size = 8

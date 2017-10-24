@@ -20,7 +20,7 @@ from cuckoo.bucket import Bucket
 
 class CuckooFilter(object):
     '''
-    Implement a text book Cuckoo filter.
+    Implement the text book Cuckoo filter.
     '''
 
     def __init__(self, capacity, fingerprint_size, bucket_size=4, max_kicks=500):
@@ -55,6 +55,9 @@ class CuckooFilter(object):
 
         # The current number of items in the filter
         self.size = 0
+
+        # The current size of the filter in bytes
+        self.byte = 0
 
 
     def insert(self, item):
@@ -196,5 +199,4 @@ class CuckooFilter(object):
 
 
     def __sizeof__(self):
-        # pylint: disable=missing-super-argument
-        return super().__sizeof__() + self.size
+        return super(object).__sizeof__() + sum(b.__sizeof__() for b in self.buckets)

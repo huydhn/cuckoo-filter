@@ -3,12 +3,21 @@ Cuckoo filter internal bucket.
 '''
 
 import random
+import sys
 
 
-class Bucket(object):
+class Empty(object):
+    __slots__ = ()
+
+    pass
+
+
+class Bucket(Empty):
     '''
     Bucket class for storing fingerprints.
     '''
+    # https://docs.python.org/3/reference/datamodel.html#object.__slots__
+    # __slots__ = ('size', 'bucket')
 
     def __init__(self, size=4):
         '''
@@ -96,5 +105,4 @@ class Bucket(object):
 
 
     def __sizeof__(self):
-        # pylint: disable=missing-super-argument
-        return super().__sizeof__() + self.bucket.__sizeof__()
+        return super(self.__class__, self).__sizeof__() + sum(f.__sizeof__() for f in self.bucket)
