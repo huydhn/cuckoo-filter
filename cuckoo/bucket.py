@@ -6,18 +6,12 @@ import random
 import sys
 
 
-class Empty(object):
-    __slots__ = ()
-
-    pass
-
-
-class Bucket(Empty):
+class Bucket(object):
     '''
     Bucket class for storing fingerprints.
     '''
     # https://docs.python.org/3/reference/datamodel.html#object.__slots__
-    # __slots__ = ('size', 'bucket')
+    __slots__ = ('size', 'bucket')
 
     def __init__(self, size=4):
         '''

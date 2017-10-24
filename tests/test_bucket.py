@@ -13,7 +13,7 @@ import sys
 
 from netaddr import IPAddress
 # pylint: disable=import-error
-from cuckoo.bucket import Bucket, Empty
+from cuckoo.bucket import Bucket
 
 
 class BucketTest(unittest.TestCase):
@@ -176,9 +176,6 @@ class BucketTest(unittest.TestCase):
 #            },
         ]
 
-        # print sys.getsizeof(bucket)
-        print sys.getsizeof(Empty())
-
         for case in cases:
             item = case['transformer'](case['item'])
 
@@ -191,5 +188,3 @@ class BucketTest(unittest.TestCase):
             # Make sure that all items are in the bucket
             self.assertEqual(bucket.contains(fingerprint), case['included'], 'Item {0} is in the bucket'.format(item))
             self.assertEqual(fingerprint in bucket, case['included'], 'Item {0} is in the bucket'.format(item))
-
-        # print sys.getsizeof(bucket)
