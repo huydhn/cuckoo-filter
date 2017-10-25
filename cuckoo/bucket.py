@@ -3,7 +3,6 @@ Cuckoo filter internal bucket.
 '''
 
 import random
-import sys
 
 
 class Bucket(object):

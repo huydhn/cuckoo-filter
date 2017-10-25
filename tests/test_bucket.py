@@ -1,5 +1,5 @@
 '''
-Test Cuckoo bucket
+Test Cuckoo bucket.
 '''
 
 try:
@@ -9,7 +9,6 @@ except:
     import unittest
 
 import mmh3
-import sys
 
 from netaddr import IPAddress
 # pylint: disable=import-error
@@ -18,12 +17,12 @@ from cuckoo.bucket import Bucket
 
 class BucketTest(unittest.TestCase):
     '''
-    Test Cuckoo bucket
+    Test Cuckoo bucket.
     '''
 
     def test_bucket(self):
         '''
-        Adding and deleting items in a bucket
+        Adding and deleting items in a bucket.
         '''
         bucket = Bucket()
 
@@ -95,85 +94,85 @@ class BucketTest(unittest.TestCase):
                 'included': False,
             },
 
-#            {
-#                'item': '192.168.1.195',
-#                'transformer': lambda string: str(int(IPAddress(string))),
-#
-#                'action': bucket.delete,
-#                'expected': False,
-#
-#                'full': True,
-#                'included': False,
-#            },
-#
-#            {
-#                'item': '192.168.1.192',
-#                'transformer': lambda string: string,
-#
-#                'action': bucket.delete,
-#                'expected': True,
-#
-#                'full': False,
-#                'included': False,
-#            },
-#
-#            {
-#                'item': '192.168.1.193',
-#                'transformer': lambda string: str(int(IPAddress(string))),
-#
-#                'action': bucket.delete,
-#                'expected': True,
-#
-#                'full': False,
-#                'included': False,
-#            },
-#
-#            {
-#                'item': '192.168.1.193',
-#                'transformer': lambda string: str(int(IPAddress(string))),
-#
-#                'action': bucket.insert,
-#                'expected': True,
-#
-#                'full': False,
-#                'included': True,
-#            },
-#
-#            # Add the same item again
-#            {
-#                'item': '192.168.1.193',
-#                'transformer': lambda string: str(int(IPAddress(string))),
-#
-#                'action': bucket.insert,
-#                'expected': True,
-#
-#                'full': True,
-#                'included': True,
-#            },
-#
-#            # Remove a duplicated item
-#            {
-#                'item': '192.168.1.193',
-#                'transformer': lambda string: str(int(IPAddress(string))),
-#
-#                'action': bucket.delete,
-#                'expected': True,
-#
-#                'full': False,
-#                'included': True,
-#            },
-#
-#            # Remove the last copy of the duplicated item
-#            {
-#                'item': '192.168.1.193',
-#                'transformer': lambda string: str(int(IPAddress(string))),
-#
-#                'action': bucket.delete,
-#                'expected': True,
-#
-#                'full': False,
-#                'included': False,
-#            },
+            {
+                'item': '192.168.1.195',
+                'transformer': lambda string: str(int(IPAddress(string))),
+
+                'action': bucket.delete,
+                'expected': False,
+
+                'full': True,
+                'included': False,
+            },
+
+            {
+                'item': '192.168.1.192',
+                'transformer': lambda string: string,
+
+                'action': bucket.delete,
+                'expected': True,
+
+                'full': False,
+                'included': False,
+            },
+
+            {
+                'item': '192.168.1.193',
+                'transformer': lambda string: str(int(IPAddress(string))),
+
+                'action': bucket.delete,
+                'expected': True,
+
+                'full': False,
+                'included': False,
+            },
+
+            {
+                'item': '192.168.1.193',
+                'transformer': lambda string: str(int(IPAddress(string))),
+
+                'action': bucket.insert,
+                'expected': True,
+
+                'full': False,
+                'included': True,
+            },
+
+            # Add the same item again
+            {
+                'item': '192.168.1.193',
+                'transformer': lambda string: str(int(IPAddress(string))),
+
+                'action': bucket.insert,
+                'expected': True,
+
+                'full': True,
+                'included': True,
+            },
+
+            # Remove a duplicated item
+            {
+                'item': '192.168.1.193',
+                'transformer': lambda string: str(int(IPAddress(string))),
+
+                'action': bucket.delete,
+                'expected': True,
+
+                'full': False,
+                'included': True,
+            },
+
+            # Remove the last copy of the duplicated item
+            {
+                'item': '192.168.1.193',
+                'transformer': lambda string: str(int(IPAddress(string))),
+
+                'action': bucket.delete,
+                'expected': True,
+
+                'full': False,
+                'included': False,
+            },
         ]
 
         for case in cases:
