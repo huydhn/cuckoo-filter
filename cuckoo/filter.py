@@ -13,6 +13,7 @@ Cuckoo filters were originally described in:
 
 import codecs
 import random
+import math
 import mmh3
 
 from cuckoo.bucket import Bucket
@@ -23,15 +24,16 @@ class CuckooFilter(object):
     '''
     Implement the text book Cuckoo filter.
     '''
+    DEFAULT_ERROR_RATE = 0.0001
 
-    def __init__(self, capacity, fingerprint_size, bucket_size=4, max_kicks=500):
+    def __init__(self, capacity, error_rate, bucket_size=4, max_kicks=500):
         '''
         Initialize Cuckoo filter parameters.
 
         capacity: The size of the filter, it defines how many buckets the filter contains.
 
-        fingerprint_size: The size of the fingerprint in bytes, a larger fingerprint size
-            results in a lower FPP.
+        error_rate: The desired error rate, the lower the error rate and the bigger the
+            bucket size, the longer the fingerprint needs to be.
 
         bucket_size : The maximum number of fingerprints a bucket can hold.  Default size
             is 4, which closely approaches the best size for FPP between 0.00001 and 0.002
@@ -41,15 +43,26 @@ class CuckooFilter(object):
         max_kicks : The number of times entries are kicked / moved around before the filter
             is considered full.  Defaults to 500 used by Fan et al. in the above paper.
         '''
-        # TODO: investigate if it is possible to extend the capacity dynamically if needed
+        # TODO:
+        # - Naive approached #1: use multiple Cuckoo filters with different capacities
         self.capacity = capacity
 
-        # TODO: investigate if it is possible to increase fingerprint size if needed
-        self.fingerprint_size = fingerprint_size
-
-        # TODO: investigate if it is possible to extend the bucket size dynamically if needed
+        # NOTE:
+        # - If the bucket size increases, a longer fingerprint will be needed to retain the
+        #   same FPP rate
+        # - The minimum fingerprint size is f >= ceil(log2(1/e) + log2(2b)) in which e is the
+        #   error rate
         self.bucket_size = bucket_size
         self.max_kicks = max_kicks
+
+        # Save the error rate to calculate the correct fingerprint size
+        self.error_rate = error_rate if error_rate else CuckooFilter.DEFAULT_ERROR_RATE
+
+        # A long fingerprint reduces the FPP rate but does not contribute much to the load
+        # factor of the filter according to the research. In our implementation, we choose
+        # to calculate the minimal fingerprint size using the target error rate and the
+        # bucket size
+        self.fingerprint_size = int(math.ceil(math.log(1.0 / self.error_rate, 2) + math.log(2 * self.bucket_size, 2)))
 
         # Initialize the list of bucket
         self.buckets = [None] * self.capacity
@@ -148,7 +161,7 @@ class CuckooFilter(object):
         Calculate the (first) index of an item in the filter.
         '''
         item_hash = mmh3.hash_bytes(item)
-        # TODO: because of this modular computation, it will be tricky to increase the
+        # Because of this modular computation, it will be tricky to increase the
         # capacity of the filter directly
         return int(codecs.encode(item_hash, 'hex'), 16) % self.capacity
 
@@ -205,14 +218,14 @@ class ScalableCuckooFilter(object):
     SCALE_FACTOR = 2
 
     # pylint: disable=unused-argument
-    def __init__(self, capacity, fingerprint_size, bucket_size=4, max_kicks=500):
+    def __init__(self, capacity, error_rate, bucket_size=4, max_kicks=500):
         '''
         Initialize Cuckoo filter parameters.
 
         capacity: The size of the filter, it defines how many buckets the filter contains.
 
-        fingerprint_size: The size of the fingerprint in bytes, a larger fingerprint size
-            results in a lower FPP.
+        error_rate: The desired error rate, the lower the error rate and the bigger the
+            bucket size, the longer the fingerprint needs to be.
 
         bucket_size : The maximum number of fingerprints a bucket can hold.  Default size
             is 4, which closely approaches the best size for FPP between 0.00001 and 0.002
@@ -225,7 +238,7 @@ class ScalableCuckooFilter(object):
         self.filters = []
 
         # Initialize the first Cuckoo filter
-        self.filters.append(CuckooFilter(capacity, fingerprint_size, bucket_size, max_kicks))
+        self.filters.append(CuckooFilter(capacity, error_rate, bucket_size, max_kicks))
 
 
     def insert(self, item):
@@ -247,12 +260,12 @@ class ScalableCuckooFilter(object):
         capacity = last_filter.capacity * ScalableCuckooFilter.SCALE_FACTOR
 
         # Everything else is the same, for now
-        fingerprint_size = last_filter.fingerprint_size
         bucket_size = last_filter.bucket_size
+        error_rate = last_filter.error_rate
         max_kicks = last_filter.max_kicks
 
         # Create a new Cuckoo filter with more capacity
-        self.filters.append(CuckooFilter(capacity, fingerprint_size, bucket_size, max_kicks))
+        self.filters.append(CuckooFilter(capacity, error_rate, bucket_size, max_kicks))
 
         # Add the item into the new and bigger filter
         return self.filters[-1].insert(item)

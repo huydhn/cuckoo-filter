@@ -8,6 +8,7 @@ try:
 except:
     import unittest
 
+import os
 import timeit
 
 from netaddr import IPAddress
@@ -19,6 +20,12 @@ class BucketTest(unittest.TestCase):
     '''
     Test classic Cuckoo filter
     '''
+    def setUp(self):
+        '''
+        Setup some variables for the test
+        '''
+        self.enable_load_test = os.environ.get('ENABLE_LOAD_TEST', False)
+
 
     def test_classic_filter(self):
         '''
@@ -26,10 +33,10 @@ class BucketTest(unittest.TestCase):
         '''
         # Use a small capacity filter for testing
         capacity = 128
-        # Use the fix fingerprint size of 8-bit for testing
-        fingerprint_size = 8
+        # Use the fix error rate of 0.000001 for testing
+        error_rate = 0.000001
 
-        cuckoo = CuckooFilter(capacity, fingerprint_size)
+        cuckoo = CuckooFilter(capacity, error_rate)
 
         # By default, a bucket has the capacity of 4
         cases = [
@@ -103,13 +110,17 @@ class BucketTest(unittest.TestCase):
             self.assertEqual(item in cuckoo, case['included'], 'Item {0} is in the bucket'.format(item))
 
 
+    # pylint: disable=no-self-use
     def test_load(self):
         '''
         Load a huge number of items and test the filter performance
         '''
+        if not self.enable_load_test:
+            return
+
         number = 10
         # Classic Cuckoo filter with 100_000_000
-        allocation_time = timeit.timeit('CuckooFilter(capacity=100000000, fingerprint_size=8)',
+        allocation_time = timeit.timeit('CuckooFilter(capacity=100000000, error_rate=0.000001)',
                                         setup='from cuckoo.filter import CuckooFilter',
                                         number=number)
         print '# Pre-allocate 100_000_000 buckets in: {0}'.format(round(float(allocation_time) / number, 4))
@@ -121,10 +132,10 @@ class BucketTest(unittest.TestCase):
         '''
         # Use a small capacity filter for testing
         capacity = 2
-        # Use the fix fingerprint size of 8-bit for testing
-        fingerprint_size = 8
+        # Use the fix error rate of 0.000001 for testing
+        error_rate = 0.000001
 
-        cuckoo = ScalableCuckooFilter(capacity, fingerprint_size, bucket_size=1)
+        cuckoo = ScalableCuckooFilter(capacity, error_rate, bucket_size=1)
 
         # By default, a bucket has the capacity of 4
         cases = [
