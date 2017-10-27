@@ -190,7 +190,7 @@ class CuckooFilter(object):
 
 
     def __repr__(self):
-        return '<CuckooFilter: size={0}, capacity={1}, fingerprint={2}, bucket={3}>'.format(
+        return '<CuckooFilter: size={0}, capacity={1}, fingerprint_size={2}, bucket_size={3}>'.format(
             self.size, self.capacity, self.fingerprint_size, self.bucket_size)
 
 
@@ -232,26 +232,30 @@ class ScalableCuckooFilter(object):
         '''
         Insert an into the filter, when the filter approaches its capacity, increasing it.
         '''
-        active_filter = self.filters[-1]
+        for cuckoo in reversed(self.filters):
+            try:
+                # Using this naive approach, items will always be added into the last or
+                # the biggest filter first.  If all filters are full, new one will be created
+                return cuckoo.insert(item)
 
-        try:
-            # TODO: using this naive approach, items will always be added into the last or
-            # the biggest filter
-            return active_filter.insert(item)
+            except CapacityException:
+                # Fail to insert the item
+                pass
 
-        except CapacityException:
-            capacity = active_filter.capacity * ScalableCuckooFilter.SCALE_FACTOR
+        last_filter = self.filters[-1]
+        # Fail to insert the item in all available filters, create a new one
+        capacity = last_filter.capacity * ScalableCuckooFilter.SCALE_FACTOR
 
-            # Everything else is the same, for now
-            fingerprint_size = active_filter.fingerprint_size
-            bucket_size = active_filter.bucket_size
-            max_kicks = active_filter.max_kicks
+        # Everything else is the same, for now
+        fingerprint_size = last_filter.fingerprint_size
+        bucket_size = last_filter.bucket_size
+        max_kicks = last_filter.max_kicks
 
-            # Create a new Cuckoo filter with more capacity
-            self.filters.append(CuckooFilter(capacity, fingerprint_size, bucket_size, max_kicks))
+        # Create a new Cuckoo filter with more capacity
+        self.filters.append(CuckooFilter(capacity, fingerprint_size, bucket_size, max_kicks))
 
-            # Add the item into the new and bigger filter
-            return self.filters[-1].insert(item)
+        # Add the item into the new and bigger filter
+        return self.filters[-1].insert(item)
 
 
     def contains(self, item):
@@ -269,7 +273,7 @@ class ScalableCuckooFilter(object):
         '''
         Remove an item from the filter, return false if it does not exist.
         '''
-        # TODO: using this naive approach, items can be removed from old filters make them
+        # Using this naive approach, items can be removed from old filters make them
         # them under capacity (usable) again
         for cuckoo in reversed(self.filters):
             if cuckoo.delete(item):
@@ -286,7 +290,7 @@ class ScalableCuckooFilter(object):
         # Sum the number of items across all filters and theirs total capacity
         size, capacity = reduce(lambda a, b: (a[0] + b[0], a[1] + b[1]), ((f.size, f.capacity) for f in self.filters))
 
-        return '<ScalableCuckooFilter: size={0}, capacity={1}, fingerprint={2}, bucket={3}'.format(
+        return '<ScalableCuckooFilter: size={0}, capacity={1}, fingerprint_size={2}, bucket_size={3}>'.format(
             size, capacity, self.filters[-1].fingerprint_size, self.filters[-1].bucket_size)
 
 

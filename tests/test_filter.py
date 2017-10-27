@@ -107,12 +107,12 @@ class BucketTest(unittest.TestCase):
         '''
         Load a huge number of items and test the filter performance
         '''
+        number = 10
         # Classic Cuckoo filter with 100_000_000
-        # allocation_time = timeit.timeit('CuckooFilter(capacity=100000000, fingerprint_size=8)',
-        #                                 setup='from cuckoo.filter import CuckooFilter',
-        #                                 number=10)
-        # print allocation_time
-        pass
+        allocation_time = timeit.timeit('CuckooFilter(capacity=100000000, fingerprint_size=8)',
+                                        setup='from cuckoo.filter import CuckooFilter',
+                                        number=number)
+        print '# Pre-allocate 100_000_000 buckets in: {0}'.format(round(float(allocation_time) / number, 4))
 
 
     def test_dynamic_capacity_filter(self):
@@ -124,7 +124,7 @@ class BucketTest(unittest.TestCase):
         # Use the fix fingerprint size of 8-bit for testing
         fingerprint_size = 8
 
-        cuckoo = ScalableCuckooFilter(capacity, fingerprint_size)
+        cuckoo = ScalableCuckooFilter(capacity, fingerprint_size, bucket_size=1)
 
         # By default, a bucket has the capacity of 4
         cases = [
@@ -191,7 +191,7 @@ class BucketTest(unittest.TestCase):
         for case in cases:
             item = case['transformer'](case['item'])
 
-            self.assertTrue(case['action'](item), 'Save {0} into the filter ok'.format(item))
+            self.assertIsNotNone(case['action'](item), 'Save {0} into the filter ok'.format(item))
 
             # Make sure that all items are in the bucket
             self.assertEqual(cuckoo.contains(item), case['included'], 'Item {0} is in the filter'.format(item))
