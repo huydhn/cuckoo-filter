@@ -218,11 +218,12 @@ class ScalableCuckooFilter(object):
     SCALE_FACTOR = 2
 
     # pylint: disable=unused-argument
-    def __init__(self, capacity, error_rate, bucket_size=4, max_kicks=500):
+    def __init__(self, initial_capacity, error_rate, bucket_size=4, max_kicks=500):
         '''
         Initialize Cuckoo filter parameters.
 
-        capacity: The size of the filter, it defines how many buckets the filter contains.
+        initial_capacity: The initial size of the filter, it defines how many buckets the
+            first filter contains.
 
         error_rate: The desired error rate, the lower the error rate and the bigger the
             bucket size, the longer the fingerprint needs to be.
@@ -238,7 +239,7 @@ class ScalableCuckooFilter(object):
         self.filters = []
 
         # Initialize the first Cuckoo filter
-        self.filters.append(CuckooFilter(capacity, error_rate, bucket_size, max_kicks))
+        self.filters.append(CuckooFilter(initial_capacity, error_rate, bucket_size, max_kicks))
 
 
     def insert(self, item):

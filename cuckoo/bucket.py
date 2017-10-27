@@ -22,8 +22,10 @@ class Bucket(object):
         '''
         self.size = size
 
-        # The bucket is implemented as an array cause it's possible to have multiple items with the same fingerprints.
+        # The bucket is implemented as an array cause it's possible to have multiple items with the same fingerprints
         self.bucket = []
+        # TODO: investigate a better way to compress the bucket's fingerprints.  It will be very helpful when long
+        # fingerprints are need for low error rate.
 
 
     def insert(self, fingerprint):
