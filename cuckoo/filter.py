@@ -64,7 +64,8 @@ class CuckooFilter(object):
         # bucket size
         self.fingerprint_size = int(math.ceil(math.log(1.0 / self.error_rate, 2) + math.log(2 * self.bucket_size, 2)))
 
-        # Initialize the list of bucket
+        # TODO: store a list of buckets like such is very Pythonic-ly wasteful cause there could
+        # be millions of such objects and Python object is unacceptably big.
         self.buckets = [None] * self.capacity
 
         # The current number of items in the filter
@@ -96,6 +97,8 @@ class CuckooFilter(object):
         # If all available buckets are full, we need to kick / move some fingerprint around
         index = random.choice(indices)
 
+        # TODO: find a way to improve this so that we can minimize the need to move
+        # fingerprints around
         for _ in range(self.max_kicks):
             # Swap the item's fingerprint with a fingerprint in the bucket
             fingerprint = self.buckets[index].swap(fingerprint)
