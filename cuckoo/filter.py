@@ -16,6 +16,7 @@ import random
 import math
 import mmh3
 
+from bitarray import bitarray
 from cuckoo.bucket import Bucket
 from cuckoo.exception import CapacityException
 
@@ -43,8 +44,6 @@ class CuckooFilter(object):
         max_kicks : The number of times entries are kicked / moved around before the filter
             is considered full.  Defaults to 500 used by Fan et al. in the above paper.
         '''
-        # TODO:
-        # - Naive approached #1: use multiple Cuckoo filters with different capacities
         self.capacity = capacity
 
         # NOTE:
@@ -214,6 +213,60 @@ class CuckooFilter(object):
         return super(self.__class__, self).__sizeof__() + sum(b.__sizeof__() for b in self.buckets)
 
 
+class BCuckooFilter(object):
+    '''
+    Implement a compact Cuckoo filter using bitarray so that it can keep millions of items.
+    '''
+    DEFAULT_ERROR_RATE = 0.0001
+
+    def __init__(self, capacity, error_rate, bucket_size=4, max_kicks=500):
+        '''
+        Initialize Cuckoo filter parameters.
+
+        capacity: The size of the filter, it defines how many buckets the filter contains.
+
+        error_rate: The desired error rate, the lower the error rate and the bigger the
+            bucket size, the longer the fingerprint needs to be.
+
+        bucket_size : The maximum number of fingerprints a bucket can hold.  Default size
+            is 4, which closely approaches the best size for FPP between 0.00001 and 0.002
+            (see Fan et al.).  Also according to the author, if your targeted FPP is greater
+            than 0.002, a bucket size of 2 is more space efficient.
+
+        max_kicks : The number of times entries are kicked / moved around before the filter
+            is considered full.  Defaults to 500 used by Fan et al. in the above paper.
+        '''
+        self.capacity = capacity
+
+        # NOTE:
+        # - If the bucket size increases, a longer fingerprint will be needed to retain the
+        #   same FPP rate
+        # - The minimum fingerprint size is f >= ceil(log2(1/e) + log2(2b)) in which e is the
+        #   error rate
+        self.bucket_size = bucket_size
+        self.max_kicks = max_kicks
+
+        # Save the error rate to calculate the correct fingerprint size
+        self.error_rate = error_rate if error_rate else CuckooFilter.DEFAULT_ERROR_RATE
+
+        # A long fingerprint reduces the FPP rate but does not contribute much to the load
+        # factor of the filter according to the research. In our implementation, we choose
+        # to calculate the minimal fingerprint size using the target error rate and the
+        # bucket size
+        self.fingerprint_size = int(math.ceil(math.log(1.0 / self.error_rate, 2) + math.log(2 * self.bucket_size, 2)))
+
+        # The key different here is that the list of buckets is practically compressed
+        # inside a bitarray structure.  It solves the memory problem when Python object
+        # is unnecessarily big.  It is a trade-off between speed and efficiency, using
+        # the Bucket class is very easy but inefficient.
+        #
+        # The size of the structure will be capacity * bucket_size * fingerprint_size
+        self.buckets = bitarray(self.capacity * self.bucket_size * self.finderprint_size)
+
+        # The current number of items in the filter
+        self.size = 0
+
+
 class ScalableCuckooFilter(object):
     '''
     Implement a scalable Cuckoo filter which has the ability to extend its capacity dynamically.
@@ -239,6 +292,7 @@ class ScalableCuckooFilter(object):
         max_kicks : The number of times entries are kicked / moved around before the filter
             is considered full.  Defaults to 500 used by Fan et al. in the above paper.
         '''
+        # Naive approached #1: use multiple Cuckoo filters with different capacities
         self.filters = []
 
         # Initialize the first Cuckoo filter
