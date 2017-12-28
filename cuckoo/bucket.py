@@ -53,6 +53,20 @@ class Bucket(object):
         return fingerprint in self.bucket
 
 
+    def find_and_replace(self, look_for, replace_with):
+        '''
+        Find an exact fingerprint the specified bucket and replace it with
+        another fingerprint.  Return False if there is no such fingerprint.
+        '''
+        try:
+            self.bucket[self.bucket.index(look_for)] = replace_with
+            return True
+
+        except ValueError:
+            # No such fingerprint in the bucket
+            return False
+
+
     def delete(self, fingerprint):
         '''
         Delete a fingerprint from the bucket.

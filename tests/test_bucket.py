@@ -10,6 +10,7 @@ except:
 
 import mmh3
 
+from bitarray import bitarray
 from netaddr import IPAddress
 # pylint: disable=import-error
 from cuckoo.bucket import Bucket
@@ -179,7 +180,8 @@ class BucketTest(unittest.TestCase):
             item = case['transformer'](case['item'])
 
             # Generate all the fingerprints
-            fingerprint = mmh3.hash_bytes(item)
+            fingerprint = bitarray()
+            fingerprint.frombytes(mmh3.hash_bytes(item))
 
             self.assertEqual(case['action'](fingerprint), case['expected'], 'Save {0} into the bucket ok'.format(item))
             self.assertEqual(bucket.is_full(), case['full'], 'Bucket capacity is ok')
