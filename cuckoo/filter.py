@@ -549,6 +549,12 @@ class ScalableCuckooFilter(object):
     '''
     SCALE_FACTOR = 2
 
+    # The original work shows that a Cuckoo filter can have a load factor up to 95.5% (Table 2)
+    # so we choose a threshold of 90% here as a conservative threshold.  It means that do not
+    # try to use the filter when its load factor is larger than 90% because of its worsening
+    # performance
+    THRESHOLD_LOAD_FACTOR = 0.90
+
     # pylint: disable=unused-argument
     def __init__(self, initial_capacity, error_rate, bucket_size=4, max_kicks=500):
         '''
@@ -580,6 +586,12 @@ class ScalableCuckooFilter(object):
         Insert an into the filter, when the filter approaches its capacity, increasing it.
         '''
         for cuckoo in reversed(self.filters):
+            # Do not wait until the capacity exception is raised cause it will degrade the
+            # filter performance by having too many fingerprints being moved around. If a
+            # filter has a load factor larger than x %, we don't use it anymore.
+            if cuckoo.load_factor() > ScalableCuckooFilter.THRESHOLD_LOAD_FACTOR:
+                continue
+
             try:
                 # Using this naive approach, items will always be added into the last or
                 # the biggest filter first.  If all filters are full, new one will be created
