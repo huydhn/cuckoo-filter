@@ -90,10 +90,19 @@ class Bucket(object):
         The given fingerprint is stored in the bucket.
         The swapped fingerprint is returned.
         '''
-        bucket_index = random.choice(range(len(self.bucket)))
+        # There is tricky bug in swap function when an item is added several times.
+        # In such case, there is a chance that a fingerprint is swapped with itself
+        # thus trying to move fingerprints around won't work.
+        #
+        # Assuming that the bucket size is 4, the maximum number of times an item
+        # can be added is 4 * 2 = 8.
+        #
+        # TODO: Investigate if there is a better solution for this cause this is
+        # a form of local limit of Cuckoo filter.
+        rindex = random.choice([i for i in range(len(self.bucket)) if fingerprint != self.bucket[i]])
 
         # Swap the two fingerprints
-        fingerprint, self.bucket[bucket_index] = self.bucket[bucket_index], fingerprint
+        fingerprint, self.bucket[rindex] = self.bucket[rindex], fingerprint
         # and return the one from the bucket
         return fingerprint
 

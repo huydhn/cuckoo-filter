@@ -195,6 +195,9 @@ class CuckooFilter(CuckooTemplate):
         # If all available buckets are full, we need to kick / move some fingerprint around
         index = random.choice(indices)
 
+        # Keep the original index here so that it can be returned later
+        original_index = index
+
         # Keep all the swapped fingerprints here so we can restore them later
         fingerprint_stack = [fingerprint]
         index_stack = [index]
@@ -221,7 +224,10 @@ class CuckooFilter(CuckooTemplate):
             if self.buckets[index].insert(fingerprint):
                 # Update the number of items in the filter
                 self.size = self.size + 1
-                return index
+
+                # Return the original index here cause that's where the original item
+                # is saved
+                return original_index
 
         if len(fingerprint_stack) != len(index_stack):
             # This is a serious error.  I don't expect this to happen but who knows.
@@ -400,14 +406,14 @@ class BCuckooFilter(CuckooTemplate):
         '''
         start_bit, end_bit = self._bit_index(index)
 
-        for bit_index in range(start_bit, end_bit, self.fingerprint_size):
-            stored_fingerprint = self.buckets[bit_index:bit_index + self.fingerprint_size]
+        for i in range(start_bit, end_bit, self.fingerprint_size):
+            stored_fingerprint = self.buckets[i:i + self.fingerprint_size]
 
             if stored_fingerprint.count(True):
                 # if the fingerprint has been set (having a bit set), leave it alone
                 continue
 
-            self.buckets[bit_index:bit_index + self.fingerprint_size] = fingerprint
+            self.buckets[i:i + self.fingerprint_size] = fingerprint
             # An empty slot has been found, save the fingerprint there then return
             return True
 
@@ -421,12 +427,23 @@ class BCuckooFilter(CuckooTemplate):
         '''
         start_bit, end_bit = self._bit_index(index)
 
+        size = self.fingerprint_size
         # Get the bit index of a random fingerprint in the bucket
-        random_index = random.choice(range(start_bit, end_bit, self.fingerprint_size))
+        rindex = random.choice([i for i in range(start_bit, end_bit, size) if fingerprint != self.buckets[i:i + size]])
+
+        # There is tricky bug in swap function when an item is added several times.
+        # In such case, there is a chance that a fingerprint is swapped with itself
+        # thus trying to move fingerprints around won't work.
+        #
+        # Assuming that the bucket size is 4, the maximum number of times an item
+        # can be added is 4 * 2 = 8.
+        #
+        # TODO: Investigate if there is a better solution for this cause this is
+        # a form of local limit of Cuckoo filter.
 
         # Swap the two fingerprints
-        swap_out = self.buckets[random_index:random_index + self.fingerprint_size]
-        self.buckets[random_index:random_index + self.fingerprint_size] = fingerprint
+        swap_out = self.buckets[rindex:rindex + self.fingerprint_size]
+        self.buckets[rindex:rindex + self.fingerprint_size] = fingerprint
 
         # and return the one from the bucket
         return swap_out
@@ -453,6 +470,9 @@ class BCuckooFilter(CuckooTemplate):
         # If all available buckets are full, we need to kick / move some fingerprint around
         index = random.choice(indices)
 
+        # Keep the original index here so that it can be returned later
+        original_index = index
+
         # Keep all the swapped fingerprints here so we can restore them later
         fingerprint_stack = [fingerprint]
         index_stack = [index]
@@ -475,7 +495,10 @@ class BCuckooFilter(CuckooTemplate):
             if self._insert(fingerprint, index):
                 # Update the number of items in the filter
                 self.size = self.size + 1
-                return index
+
+                # Return the original index here cause that's where the original item
+                # is saved
+                return original_index
 
         if len(fingerprint_stack) != len(index_stack):
             # This is a serious error.  I don't expect this to happen but who knows.
