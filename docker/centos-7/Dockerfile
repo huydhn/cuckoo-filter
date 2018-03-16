@@ -1,4 +1,4 @@
-FROM artifactory.ges.symantec.com/ase-docker/fpm:yel7
+FROM centos:7
 
 RUN yum clean all
 
