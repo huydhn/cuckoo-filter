@@ -15,6 +15,7 @@ import codecs
 import random
 import math
 from abc import ABCMeta, abstractmethod
+from functools import reduce
 
 import mmh3
 from bitarray import bitarray

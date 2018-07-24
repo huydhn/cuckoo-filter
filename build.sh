@@ -35,12 +35,15 @@ mkdir -p $BUILDROOT/SRPMS
 
 fpm --verbose \
     -s python \
-    -t rpm \
+    -t rpm    \
+    --python-bin /usr/bin/python3.4                \
+    --python-easyinstall /usr/bin/easy_install-3.4 \
+    --python-package-name-prefix python34          \
     -a noarch \
-    -n python-cuckoo-filter \
+    -n python34-cuckoo-filter \
     --iteration $RELEASE$DISTRO \
-    -d python-bitarray \
-    -d python-mmh3 \
+    -d python34-bitarray \
+    -d python34-mmh3     \
     ./setup.py
 
 RC=$?; if [[ $RC != 0 ]]; then exit $RC; fi
