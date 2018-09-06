@@ -138,7 +138,7 @@ class CuckooTest(unittest.TestCase):
         allocation_time = timeit.timeit('BCuckooFilter(capacity=100000000, error_rate=0.000001)',
                                         setup='from cuckoo.filter import BCuckooFilter',
                                         number=number)
-        print '# Pre-allocate 100_000_000 buckets in: {0}'.format(round(float(allocation_time) / number, 4))
+        print('# Pre-allocate 100_000_000 buckets in: {}'.format(round(float(allocation_time) / number, 4)))
 
 
     def test_dynamic_capacity_filter(self):

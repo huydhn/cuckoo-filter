@@ -40,7 +40,7 @@ fpm --verbose \
     --python-easyinstall /usr/bin/easy_install-3.4 \
     --python-package-name-prefix python34          \
     -a noarch \
-    -n python34-cuckoo-filter \
+    -n python34-scalable-cuckoo-filter \
     --iteration $RELEASE$DISTRO \
     -d python34-bitarray \
     -d python34-mmh3     \
