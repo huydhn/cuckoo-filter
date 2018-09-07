@@ -1,5 +1,5 @@
-Experiment with Cuckoo filters
-------------------------------
+Cuckoo filters
+--------------
 
 A Cuckoo filter is a data structure for probabilistic set-membership
 queries with a low false positive probability (FPP). As an improvement
@@ -15,6 +15,16 @@ Cuckoo filters were originally described in:
 
 This package implements the basic Cuckoo filter as well as several
 derivations built on top of it.
+
+Installation
+------------
+
+The package can be installed from
+[PyPI](https://pypi.org/project/scalable-cuckoo-filter)
+
+```
+pip install scalable-cuckoo-filter
+```
 
 Classic Cuckoo filter
 ---------------------
