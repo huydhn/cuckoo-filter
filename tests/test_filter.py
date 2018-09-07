@@ -12,7 +12,6 @@ import os
 import timeit
 
 from netaddr import IPAddress
-# pylint: disable=import-error
 from cuckoo.filter import CuckooFilter, BCuckooFilter, ScalableCuckooFilter
 
 

@@ -8,11 +8,10 @@ try:
 except:
     import unittest
 
-import mmh3
-
 from bitarray import bitarray
 from netaddr import IPAddress
-# pylint: disable=import-error
+
+import mmh3
 from cuckoo.bucket import Bucket
 
 

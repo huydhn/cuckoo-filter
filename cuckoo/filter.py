@@ -24,7 +24,7 @@ from cuckoo.bucket import Bucket
 from cuckoo.exception import CapacityException, InconsistencyException
 
 
-class CuckooTemplate(object):
+class CuckooTemplate():
     '''
     The base template of a Cuckoo filter.  Do not use this
     directly.
@@ -74,8 +74,8 @@ class CuckooTemplate(object):
         # factor of the filter according to the research. In our implementation, we choose
         # to calculate the minimal fingerprint size using the target error rate and the
         # bucket size
-        fp = math.log(1.0/self.error_rate, 2) + math.log(2*self.bucket_size, 2)
-        self.fingerprint_size = int(math.ceil(fp))
+        min_fp = math.log(1.0/self.error_rate, 2) + math.log(2*self.bucket_size, 2)
+        self.fingerprint_size = int(math.ceil(min_fp))
 
         # The current number of items in the filter
         self.size = 0
@@ -122,8 +122,8 @@ class CuckooTemplate(object):
         # TODO: this is partial-key Cuckoo hashing, investigate if it is
         # possible to devise a novel approach in which there could be more
         # than 2 indices
-        hash = (index ^ self.index(fingerprint.tobytes())) % self.capacity
-        indices.append(hash)
+        h_value = (index ^ self.index(fingerprint.tobytes())) % self.capacity
+        indices.append(h_value)
 
         for index in indices:
             yield index
@@ -255,7 +255,6 @@ class CuckooFilter(CuckooTemplate):
             fingerprint = fingerprint_stack.pop()
             index = index_stack.pop()
 
-            # nopep8
             if not self.buckets[index_stack[-1]].find_and_replace(look_for=fingerprint_stack[-1],
                                                                   replace_with=fingerprint):
                 msg = 'Cuckoo filter becomes inconsistent'
@@ -263,7 +262,6 @@ class CuckooFilter(CuckooTemplate):
                 # who knows
                 raise InconsistencyException(msg)
 
-        # nopep8
         msg = 'Cuckoo filter reaches its capacity ({}/{})'.format(self.size, self.capacity)
         # After restoring fingerprints successfully, raise the capacity
         # exception
@@ -417,14 +415,15 @@ class BCuckooFilter(CuckooTemplate):
 
     def _insert(self, fingerprint, index):
         '''
-        Insert a fingerprint into the bucket at the specified index.  Basically, it set
-        the corresponding bits in the bucket:
+        Insert a fingerprint into the bucket at the specified index. Basically,
+        it set the corresponding bits in the bucket:
 
                 Bucket               Bucket
         ------------------------------------------ ...
         | F1 | F2 | F3 | F4 || F1 | F2 | F3 | F4 |
 
-        When the bucket is full (all bits are set), the function will return False.
+        When the bucket is full (all bits are set), the function will return
+        False.
         '''
         start_bit, end_bit = self._bit_index(index)
 
@@ -432,11 +431,11 @@ class BCuckooFilter(CuckooTemplate):
             stored_fingerprint = self.buckets[i:i + self.fingerprint_size]
 
             if stored_fingerprint.count(True):
-                # if the fingerprint has been set (having a bit set), leave it alone
+                # Continue the fingerprint has been set (having a bit set)
                 continue
 
             self.buckets[i:i + self.fingerprint_size] = fingerprint
-            # An empty slot has been found, save the fingerprint there then return
+            # An empty slot has been found, save the fingerprint there
             return True
 
         # All fingerprints have been set, the bucket is full
@@ -444,23 +443,25 @@ class BCuckooFilter(CuckooTemplate):
 
     def _swap(self, fingerprint, index):
         '''
-        Swap a fingerprint with a random fingerprint of the bucket at the specified index.
+        Swap a fingerprint with a random fingerprint of the bucket at the
+        specified index.
         '''
         start_bit, end_bit = self._bit_index(index)
 
         size = self.fingerprint_size
         # Get the bit index of a random fingerprint in the bucket
-        rindex = random.choice([i for i in range(start_bit, end_bit, size) if fingerprint != self.buckets[i:i + size]])
+        rindex = random.choice([i for i in range(start_bit, end_bit, size)
+                                if fingerprint != self.buckets[i:i + size]])
 
-        # There is tricky bug in swap function when an item is added several times.
-        # In such case, there is a chance that a fingerprint is swapped with itself
-        # thus trying to move fingerprints around won't work.
+        # There is tricky bug in swap function when an item is added several
+        # times. In such case, there is a chance that a fingerprint is swapped
+        # with itself thus trying to move fingerprints around won't work.
         #
-        # Assuming that the bucket size is 4, the maximum number of times an item
-        # can be added is 4 * 2 = 8.
+        # Assuming that the bucket size is 4, the maximum number of times an
+        # item can be added is 4 * 2 = 8.
         #
-        # TODO: Investigate if there is a better solution for this cause this is
-        # a form of local limit of Cuckoo filter.
+        # TODO: Investigate if there is a better solution for this cause this
+        # is a form of local limit of Cuckoo filter.
 
         # Swap the two fingerprints
         swap_out = self.buckets[rindex:rindex + self.fingerprint_size]
@@ -471,7 +472,8 @@ class BCuckooFilter(CuckooTemplate):
 
     def insert(self, item):
         '''
-        Insert an into the filter, throw an exception if the filter is full and the insertion fails.
+        Insert an into the filter, throw an exception if the filter is full and
+        the insertion fails.
         '''
         # Generate the fingerprint in bit array format
         fingerprint = self.fingerprint(item)
@@ -487,7 +489,8 @@ class BCuckooFilter(CuckooTemplate):
                 self.size = self.size + 1
                 return index
 
-        # If all available buckets are full, we need to kick / move some fingerprint around
+        # If all available buckets are full, we need to kick / move some
+        # fingerprints around
         index = random.choice(indices)
 
         # Keep the original index here so that it can be returned later
@@ -497,8 +500,8 @@ class BCuckooFilter(CuckooTemplate):
         fingerprint_stack = [fingerprint]
         index_stack = [index]
 
-        # TODO: find a way to improve this so that we can minimize the need to move
-        # fingerprints around
+        # TODO: find a way to improve this so that we can minimize the need to
+        # move fingerprints around
         for _ in range(self.max_kicks):
             # Swap the item's fingerprint with a fingerprint in the bucket
             fingerprint = self._swap(fingerprint, index)
@@ -516,16 +519,18 @@ class BCuckooFilter(CuckooTemplate):
                 # Update the number of items in the filter
                 self.size = self.size + 1
 
-                # Return the original index here cause that's where the original item
-                # is saved
+                # Return the original index here cause that's where the
+                # original item is saved
                 return original_index
 
         if len(fingerprint_stack) != len(index_stack):
-            # This is a serious error.  I don't expect this to happen but who knows.
-            raise InconsistencyException('Cuckoo filter becomes inconsistent, continue at your own risk')
+            # This is a serious error.  I don't expect this to happen but
+            # who knows.
+            raise InconsistencyException('Cuckoo filter becomes inconsistent')
 
-        # When the filter reaches its capacity, we will rewind the fingerprints stack and
-        # restore them so that there are no change to the list of existing fingerprints.
+        # When the filter reaches its capacity, we will rewind the fingerprints
+        # stack and restore them so that there are no change to the list of
+        # existing fingerprints.
         while len(fingerprint_stack) > 1:
             fingerprint = fingerprint_stack.pop()
             index = index_stack.pop()
@@ -533,11 +538,12 @@ class BCuckooFilter(CuckooTemplate):
             if not self._find_and_replace(look_for=fingerprint_stack[-1],
                                           replace_with=fingerprint,
                                           index=index_stack[-1]):
-                # This is a serious error.  I don't expect this to happen but who knows
+                # This is a serious error.  I don't expect this to happen
                 raise InconsistencyException('Cuckoo filter becomes inconsistent')
 
+        msg = 'Cuckoo filter reaches its capacity ({}/{})'.format(self.size, self.capacity)
         # After restoring fingerprints successfully, raise the capacity exception
-        raise CapacityException('Cuckoo filter is approaching its capacity ({0}/{1})'.format(self.size, self.capacity))
+        raise CapacityException(msg)
 
     def contains(self, item):
         '''
@@ -546,9 +552,9 @@ class BCuckooFilter(CuckooTemplate):
         # Generate the fingerprint in bit array format
         fingerprint = self.fingerprint(item)
 
-        # TODO: investigate if it is possible to devise a novel approach in which
-        # there could be more than 2 indexes as it is currently used by partial-key
-        # Cuckoo hashing
+        # TODO: investigate if it is possible to devise a novel approach in
+        # which there could be more than 2 indexes as it is currently used by
+        # partial-key Cuckoo hashing
         for i in self.indices(item, fingerprint):
             if self._include(fingerprint, i):
                 return True
@@ -578,16 +584,17 @@ class BCuckooFilter(CuckooTemplate):
             self.size, self.capacity, self.fingerprint_size, self.bucket_size)
 
 
-class ScalableCuckooFilter(object):
+class ScalableCuckooFilter():
     '''
-    Implement a scalable Cuckoo filter which has the ability to extend its capacity dynamically.
+    Implement a scalable Cuckoo filter which has the ability to extend its
+    capacity dynamically.
     '''
     SCALE_FACTOR = 2
 
-    # The original work shows that a Cuckoo filter can have a load factor up to 95.5% (Table 2)
-    # so we choose a threshold of 90% here as a conservative threshold.  It means that do not
-    # try to use the filter when its load factor is larger than 90% because of its worsening
-    # performance
+    # The original work shows that a Cuckoo filter can have a load factor up
+    # to 95.5% (Table 2) so we choose a threshold of 90% here as a conservative
+    # threshold.  It means that do not try to use the filter when its load
+    # factor is larger than 90% because of its worsening performance
     THRESHOLD_LOAD_FACTOR = 0.90
 
     # pylint: disable=unused-argument
@@ -595,19 +602,21 @@ class ScalableCuckooFilter(object):
         '''
         Initialize Cuckoo filter parameters.
 
-        initial_capacity: The initial size of the filter, it defines how many buckets the
-            first filter contains.
+        initial_capacity: The initial size of the filter, it defines how many
+            buckets the first filter contains.
 
-        error_rate: The desired error rate, the lower the error rate and the bigger the
-            bucket size, the longer the fingerprint needs to be.
+        error_rate: The desired error rate, the lower the error rate and the
+            bigger the bucket size, the longer the fingerprint needs to be.
 
-        bucket_size : The maximum number of fingerprints a bucket can hold.  Default size
-            is 4, which closely approaches the best size for FPP between 0.00001 and 0.002
-            (see Fan et al.).  Also according to the author, if your targeted FPP is greater
-            than 0.002, a bucket size of 2 is more space efficient.
+        bucket_size : The maximum number of fingerprints a bucket can hold.
+            The default size is 4, which closely approaches the best size for
+            FPP between 0.00001 and 0.002 (see Fan et al.).  Also according to
+            the author, if your targeted FPP is greater than 0.002, a bucket
+            size of 2 is more space efficient.
 
-        max_kicks : The number of times entries are kicked / moved around before the filter
-            is considered full.  Defaults to 500 used by Fan et al. in the above paper.
+        max_kicks : The number of times entries are kicked / moved around
+            before the filter is considered full.  Defaults to 500 used by
+            Fan et al. in the above paper.
         '''
         # Naive approached #1: use multiple Cuckoo filters with different capacities
         self.filters = []
@@ -617,18 +626,21 @@ class ScalableCuckooFilter(object):
 
     def insert(self, item):
         '''
-        Insert an into the filter, when the filter approaches its capacity, increasing it.
+        Insert an into the filter, when the filter approaches its capacity,
+        increasing it.
         '''
         for cuckoo in reversed(self.filters):
-            # Do not wait until the capacity exception is raised cause it will degrade the
-            # filter performance by having too many fingerprints being moved around. If a
-            # filter has a load factor larger than x %, we don't use it anymore.
+            # Do not wait until the capacity exception is raised cause it will
+            # degrade the filter performance by having too many fingerprints
+            # being moved around. If a filter has a load factor larger than
+            # x %, we don't use it anymore.
             if cuckoo.load_factor() > ScalableCuckooFilter.THRESHOLD_LOAD_FACTOR:
                 continue
 
             try:
-                # Using this naive approach, items will always be added into the last or
-                # the biggest filter first.  If all filters are full, new one will be created
+                # Using this naive approach, items will always be added into
+                # the last or the biggest filter first.  If all filters are
+                # full, new one will be created
                 return cuckoo.insert(item)
 
             except CapacityException:
@@ -664,8 +676,8 @@ class ScalableCuckooFilter(object):
         '''
         Remove an item from the filter, return false if it does not exist.
         '''
-        # Using this naive approach, items can be removed from old filters make them
-        # them under capacity (usable) again
+        # Using this naive approach, items can be removed from old filters
+        # make them them under capacity (usable) again
         for cuckoo in reversed(self.filters):
             if cuckoo.delete(item):
                 return True

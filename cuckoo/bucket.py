@@ -5,7 +5,7 @@ Cuckoo filter internal bucket.
 import random
 
 
-class Bucket(object):
+class Bucket():
     '''
     Bucket class for storing fingerprints.
     '''

@@ -1,0 +1,12 @@
+language: python
+os:
+  - linux
+python:
+  - '3.6'
+install:
+  - pip install pytest-pep8
+  - pip install netaddr
+  - pip install .
+script:
+  - pytest --pep8 -m pep8 cuckoo/
+  - pytest tests/
