@@ -9,7 +9,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='scalable-cuckoo-filter',
-    version='1.0',
+    version='1.1',
     description='Scalable Cuckoo filter',
     url='https://github.com/huydhn/cuckoo-filter',
     author='Huy Do',
