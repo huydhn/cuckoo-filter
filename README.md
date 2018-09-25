@@ -1,6 +1,9 @@
 Cuckoo filters
 --------------
 
+[![Build Status](https://travis-ci.org/huydhn/cuckoo-filter.svg?branch=master)](https://travis-ci.org/huydhn/cuckoo-filter)
+[![codecov.io](https://codecov.io/gh/huydhn/cuckoo-filter/master.svg)](http://codecov.io/gh/huydhn/cuckoo-filter?branch=master)
+
 A Cuckoo filter is a data structure for probabilistic set-membership
 queries with a low false positive probability (FPP). As an improvement
 over the classic Bloom filter, items can be added or removed into

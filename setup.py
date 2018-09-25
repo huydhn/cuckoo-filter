@@ -18,7 +18,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=['mmh3', 'bitarray'],
-    tests_require=['unittest2', 'coverage', 'nose>=1.3.7', 'netaddr', 'pytest-pep8'],
+    tests_require=['unittest2', 'coverage', 'nose>=1.3.7', 'netaddr', 'pytest-pep8', 'pytest-cov', 'codecov'],
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

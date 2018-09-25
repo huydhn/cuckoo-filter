@@ -4,9 +4,12 @@ os:
 python:
   - '3.6'
 install:
-  - pip install pytest-pep8
+  - pip install pytest-pep8 pytest-cov
+  - pip install codecov
   - pip install netaddr
-  - pip install .
+  - pip install -e .[tests]
 script:
   - pytest --pep8 -m pep8 cuckoo/
-  - pytest tests/
+  - PYTHONPATH=$PWD:$PYTHONPATH pytest --cov=./ tests/
+after_success:
+  - codecov
