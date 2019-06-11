@@ -4,7 +4,7 @@ os:
 python:
   - '3.6'
 install:
-  - pip install pytest-pep8 pytest-cov
+  - pip install pytest-pep8 pytest-cov==2.6.1 pytest==3.3.0
   - pip install codecov
   - pip install netaddr
   - pip install -e .[tests]
