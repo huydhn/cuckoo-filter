@@ -36,14 +36,14 @@ mkdir -p $BUILDROOT/SRPMS
 fpm --verbose \
     -s python \
     -t rpm    \
-    --python-bin /usr/bin/python3.4                \
-    --python-easyinstall /usr/bin/easy_install-3.4 \
-    --python-package-name-prefix python34          \
+    --python-bin /usr/bin/python3.6                \
+    --python-easyinstall /usr/bin/easy_install-3.6 \
+    --python-package-name-prefix python36          \
     -a noarch \
-    -n python34-scalable-cuckoo-filter \
+    -n python36-scalable-cuckoo-filter \
     --iteration $RELEASE$DISTRO \
-    -d python34-bitarray \
-    -d python34-mmh3     \
+    -d python36-bitarray \
+    -d python36-mmh3     \
     ./setup.py
 
 RC=$?; if [[ $RC != 0 ]]; then exit $RC; fi
