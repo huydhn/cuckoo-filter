@@ -1,8 +1,8 @@
 '''
 A Cuckoo filter is a data structure for probabilistic set-membership queries
-with a low false positive probability (FPP).  As an improvement over the
-classic Bloom filter, items can be added or removed into Cuckoo filters at
-will.  Cuckoo filter also utilizes space more efficiently.
+with a low false positive probability (FPP). As an improvement over the
+classic Bloom filter, items can be added or removed into Cuckoo filters
+at will. Cuckoo filter also utilizes space more efficiently.
 
 Cuckoo filters were originally described in:
     Fan, B., Andersen, D. G., Kaminsky, M., & Mitzenmacher, M. D. (2014, Dec).
