@@ -2,11 +2,7 @@
 Test Cuckoo bucket.
 '''
 
-try:
-    import unittest2 as unittest
-# pylint: disable=bare-except
-except:
-    import unittest
+import unittest
 
 from bitarray import bitarray
 from netaddr import IPAddress

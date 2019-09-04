@@ -1,27 +1,19 @@
 '''
-Test Cuckoo filter
+Test serialize and de-serialize the filter using pickle
 '''
 
-import os
-import timeit
 import unittest
+import pickle
 
 from netaddr import IPAddress
 from cuckoo.filter import CuckooFilter, BCuckooFilter, ScalableCuckooFilter
 
 
-class CuckooTest(unittest.TestCase):
+class SerializationTest(unittest.TestCase):
     '''
     Test various implementation of Cuckoo filters.
     '''
-    def setUp(self):
-        '''
-        Setup some variables for the test.
-        '''
-        self.enable_load_test = os.environ.get('ENABLE_LOAD_TEST', False)
-
-
-    def test_static_filters(self):
+    def test_serialize_static_filters(self):
         '''
         Adding and deleting items from the static Cuckoo filters.
         '''
@@ -38,35 +30,30 @@ class CuckooTest(unittest.TestCase):
                 'item': '192.168.1.190',
                 'transformer': lambda string: string,
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             {
                 'item': '192.168.1.191',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             {
                 'item': '192.168.1.192',
                 'transformer': lambda string: string,
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             {
                 'item': '192.168.1.193',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             {
                 'item': '192.168.1.192',
                 'transformer': lambda string: string,
                 'action': cuckoo.delete,
-                'included': False,
             },
 
             # Add the same item again
@@ -74,7 +61,6 @@ class CuckooTest(unittest.TestCase):
                 'item': '192.168.1.193',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             # Remove a duplicated item
@@ -82,7 +68,6 @@ class CuckooTest(unittest.TestCase):
                 'item': '192.168.1.193',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.delete,
-                'included': True,
             },
 
             # Remove the last copy of the duplicated item
@@ -90,18 +75,27 @@ class CuckooTest(unittest.TestCase):
                 'item': '192.168.1.193',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.delete,
-                'included': False,
             },
         ]
 
+        self.results = {
+            '192.168.1.190': True,
+            str(int(IPAddress('192.168.1.191'))): True,
+            '192.168.1.192': False,
+            str(int(IPAddress('192.168.1.193'))): False,
+        }
+
         for case in cases:
             item = case['transformer'](case['item'])
-
             self.assertTrue(case['action'](item), 'Insert / delete {0} from the filter ok'.format(item))
 
+        # Dump and load the filter using pickle
+        filter_reload = pickle.loads(pickle.dumps(cuckoo))
+
+        for item, exists in self.results.items():
             # Make sure that all items are in the bucket
-            self.assertEqual(cuckoo.contains(item), case['included'], 'Item {0} is in the filter'.format(item))
-            self.assertEqual(item in cuckoo, case['included'], 'Item {0} is in the bucket'.format(item))
+            self.assertEqual(filter_reload.contains(item), exists, 'Item {0} is in the filter'.format(item))
+            self.assertEqual(item in filter_reload, exists, 'Item {0} is in the bucket'.format(item))
 
         # Test the bitarray Cuckoo filter
         bcuckoo = BCuckooFilter(capacity, error_rate)
@@ -111,31 +105,17 @@ class CuckooTest(unittest.TestCase):
             case['action'] = bcuckoo.insert if case['action'] == cuckoo.insert else bcuckoo.delete
 
             item = case['transformer'](case['item'])
-
             self.assertTrue(case['action'](item), 'Insert / delete {0} from the filter ok'.format(item))
 
+        bfilter_reload = pickle.loads(pickle.dumps(bcuckoo))
+
+        for item, exists in self.results.items():
             # Make sure that all items are in the bucket
-            self.assertEqual(bcuckoo.contains(item), case['included'], 'Item {0} is in the filter'.format(item))
-            self.assertEqual(item in bcuckoo, case['included'], 'Item {0} is in the bucket'.format(item))
+            self.assertEqual(bfilter_reload.contains(item), exists, 'Item {0} is in the filter'.format(item))
+            self.assertEqual(item in bfilter_reload, exists, 'Item {0} is in the bucket'.format(item))
 
 
-    # pylint: disable=no-self-use
-    def test_load(self):
-        '''
-        Load a huge number of items and test the filter performance.
-        '''
-        if not self.enable_load_test:
-            return
-
-        number = 10
-        # Bit array Cuckoo filter with 100_000_000 buckets
-        allocation_time = timeit.timeit('BCuckooFilter(capacity=100000000, error_rate=0.000001)',
-                                        setup='from cuckoo.filter import BCuckooFilter',
-                                        number=number)
-        print('# Pre-allocate 100_000_000 buckets in: {}'.format(round(float(allocation_time) / number, 4)))
-
-
-    def test_dynamic_capacity_filter(self):
+    def test_serialize_dynamic_filter(self):
         '''
         Use a filter with dynamic bucket size
         '''
@@ -152,35 +132,30 @@ class CuckooTest(unittest.TestCase):
                 'item': '192.168.1.190',
                 'transformer': lambda string: string,
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             {
                 'item': '192.168.1.191',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             {
                 'item': '192.168.1.192',
                 'transformer': lambda string: string,
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             {
                 'item': '192.168.1.193',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             {
                 'item': '192.168.1.192',
                 'transformer': lambda string: string,
                 'action': cuckoo.delete,
-                'included': False,
             },
 
             # Add the same item again
@@ -188,7 +163,6 @@ class CuckooTest(unittest.TestCase):
                 'item': '192.168.1.193',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.insert,
-                'included': True,
             },
 
             # Remove a duplicated item
@@ -196,7 +170,6 @@ class CuckooTest(unittest.TestCase):
                 'item': '192.168.1.193',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.delete,
-                'included': True,
             },
 
             # Remove the last copy of the duplicated item
@@ -204,15 +177,23 @@ class CuckooTest(unittest.TestCase):
                 'item': '192.168.1.193',
                 'transformer': lambda string: str(int(IPAddress(string))),
                 'action': cuckoo.delete,
-                'included': False,
             },
         ]
 
+        self.results = {
+            '192.168.1.190': True,
+            str(int(IPAddress('192.168.1.191'))): True,
+            '192.168.1.192': False,
+            str(int(IPAddress('192.168.1.193'))): False,
+        }
+
         for case in cases:
             item = case['transformer'](case['item'])
-
             self.assertIsNotNone(case['action'](item), 'Save {0} into the filter ok'.format(item))
 
+        filter_reload = pickle.loads(pickle.dumps(cuckoo))
+
+        for item, exists in self.results.items():
             # Make sure that all items are in the bucket
-            self.assertEqual(cuckoo.contains(item), case['included'], 'Item {0} is in the filter'.format(item))
-            self.assertEqual(item in cuckoo, case['included'], 'Item {0} is in the bucket'.format(item))
+            self.assertEqual(filter_reload.contains(item), exists, 'Item {0} is in the filter'.format(item))
+            self.assertEqual(item in filter_reload, exists, 'Item {0} is in the bucket'.format(item))
